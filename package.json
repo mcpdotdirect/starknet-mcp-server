@@ -1,0 +1,32 @@
+{
+  "name": "mcp-server",
+  "module": "src/index.ts",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Model Context Protocol (MCP) Server",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir build --target node",
+    "build:http": "bun build src/server/http-server.ts --outdir build --target node",
+    "dev": "bun --watch src/index.ts",
+    "start:http": "bun run src/server/http-server.ts",
+    "dev:http": "bun --watch src/server/http-server.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.11.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "starknet": "^6.23.1",
+    "zod": "^3.24.2"
+  }
+}
