@@ -2,7 +2,7 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6)
-![MCP](https://img.shields.io/badge/MCP-1.6+-green)
+![MCP](https://img.shields.io/badge/MCP-1.7+-green)
 
 A CLI tool to create a new Model Context Protocol (MCP) server project. This package provides a template for building custom MCP servers that can be used by AI agents to interact with external systems and data sources.
 
