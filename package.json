@@ -3,7 +3,7 @@
   "module": "src/index.ts",
   "type": "module",
   "version": "1.0.0",
-  "description": "Model Context Protocol (MCP) server for interacting with StarkNet",
+  "description": "Model Context Protocol (MCP) server for interacting with Starknet",
   "private": false,
   "main": "build/index.js",
   "bin": {

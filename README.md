@@ -302,14 +302,14 @@ main();
    - "Get information about the latest block on Starknet"
    - "Look up the owner of NFT #123 in collection 0x..."
 
-### Example: Getting an ETH Balance with StarkNet ID
+### Example: Getting an ETH Balance with Starknet ID
 
 ```javascript
-// Example of using the MCP client to check an ETH balance using StarkNet ID
+// Example of using the MCP client to check an ETH balance using Starknet ID
 const mcp = new McpClient("http://localhost:3000");
 
 const result = await mcp.invokeTool("get_starknet_eth_balance", {
-  address: "vitalik.stark", // StarkNet ID instead of address
+  address: "vitalik.stark", // Starknet ID instead of address
   network: "mainnet"
 });
 
@@ -320,10 +320,10 @@ console.log(result);
 // }
 ```
 
-### Example: Resolving a StarkNet ID
+### Example: Resolving a Starknet ID
 
 ```javascript
-// Example of using the MCP client to resolve a StarkNet ID to an address
+// Example of using the MCP client to resolve a Starknet ID to an address
 const mcp = new McpClient("http://localhost:3000");
 
 const result = await mcp.invokeTool("resolve_starknet_address", {
@@ -390,7 +390,7 @@ This server implements the following MCP tools:
 - `get_supported_starknet_networks`: Get a list of supported Starknet networks
 
 #### Balance Tools
-- `get_starknet_eth_balance`: Get the ETH balance for a Starknet address or StarkNet ID
+- `get_starknet_eth_balance`: Get the ETH balance for a Starknet address or Starknet ID
 - `get_starknet_token_balance`: Get the balance of any token for an address
 - `get_starknet_strk_balance`: Get the STRK token balance for an address
 - `get_starknet_native_balances`: Get all native token balances (ETH and STRK) for an address
@@ -501,7 +501,7 @@ starknet-mcp-server/
 │   │       ├── blocks.ts       # Block services
 │   │       ├── clients.ts      # Client utilities
 │   │       ├── contracts.ts    # Contract interactions
-│   │       ├── starknetid.ts   # StarkNet ID services
+│   │       ├── starknetid.ts   # Starknet ID services
 │   │       ├── tokens.ts       # Token services
 │   │       ├── transactions.ts # Transaction services
 │   │       ├── transfer.ts     # Transfer services

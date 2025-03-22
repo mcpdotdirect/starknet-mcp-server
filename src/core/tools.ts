@@ -69,14 +69,14 @@ export function registerTools(server: McpServer) {
   // Get ETH balance
   server.tool(
     "get_starknet_eth_balance",
-    "Get the ETH balance for a Starknet address or StarkNet ID",
+    "Get the ETH balance for a Starknet address or Starknet ID",
     {
-      address: z.string().describe("Starknet address or StarkNet ID (with or without .stark)"),
+      address: z.string().describe("Starknet address or Starknet ID (with or without .stark)"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ address, network = "mainnet" }) => {
       try {
-        // Resolve address if it's a StarkNet ID
+        // Resolve address if it's a Starknet ID
         const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
         const balance = await services.getETHBalance(resolvedAddress, network);
         return {
@@ -101,15 +101,15 @@ export function registerTools(server: McpServer) {
   // Get ERC20 token balance
   server.tool(
     "get_starknet_token_balance",
-    "Get the token balance for a Starknet address or StarkNet ID",
+    "Get the token balance for a Starknet address or Starknet ID",
     {
-      tokenAddress: z.string().describe("Token contract address or StarkNet ID"),
-      ownerAddress: z.string().describe("Owner's Starknet address or StarkNet ID"),
+      tokenAddress: z.string().describe("Token contract address or Starknet ID"),
+      ownerAddress: z.string().describe("Owner's Starknet address or Starknet ID"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ tokenAddress, ownerAddress, network = "mainnet" }) => {
       try {
-        // Resolve addresses if they're StarkNet IDs
+        // Resolve addresses if they're Starknet IDs
         const resolvedTokenAddress = await services.utils.resolveNameOrAddress(tokenAddress, network);
         const resolvedOwnerAddress = await services.utils.resolveNameOrAddress(ownerAddress, network);
         
@@ -136,14 +136,14 @@ export function registerTools(server: McpServer) {
   // Get STRK token balance
   server.tool(
     "get_starknet_strk_balance",
-    "Get the STRK token balance for a Starknet address or StarkNet ID",
+    "Get the STRK token balance for a Starknet address or Starknet ID",
     {
-      address: z.string().describe("Starknet address or StarkNet ID (with or without .stark)"),
+      address: z.string().describe("Starknet address or Starknet ID (with or without .stark)"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ address, network = "mainnet" }) => {
       try {
-        // Resolve address if it's a StarkNet ID
+        // Resolve address if it's a Starknet ID
         const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
         const balance = await services.getSTRKBalance(resolvedAddress, network);
         return {
@@ -168,14 +168,14 @@ export function registerTools(server: McpServer) {
   // Get all native token balances (ETH and STRK)
   server.tool(
     "get_starknet_native_balances",
-    "Get all native token balances (ETH and STRK) for a Starknet address or StarkNet ID",
+    "Get all native token balances (ETH and STRK) for a Starknet address or Starknet ID",
     {
-      address: z.string().describe("Starknet address or StarkNet ID (with or without .stark)"),
+      address: z.string().describe("Starknet address or Starknet ID (with or without .stark)"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ address, network = "mainnet" }) => {
       try {
-        // Resolve address if it's a StarkNet ID
+        // Resolve address if it's a Starknet ID
         const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
         const balances = await services.getNativeTokenBalances(resolvedAddress, network);
         return {
@@ -271,14 +271,14 @@ export function registerTools(server: McpServer) {
   // Get full Starknet profile
   server.tool(
     "get_starknet_profile",
-    "Get the full Starknet ID profile for an address or StarkNet ID",
+    "Get the full Starknet ID profile for an address or Starknet ID",
     {
-      address: z.string().describe("Starknet address or StarkNet ID to lookup"),
+      address: z.string().describe("Starknet address or Starknet ID to lookup"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ address, network = "mainnet" }) => {
       try {
-        // Resolve address if it's a StarkNet ID
+        // Resolve address if it's a Starknet ID
         const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
         
         const profile = await services.getStarkProfile(resolvedAddress, network);
@@ -457,7 +457,7 @@ export function registerTools(server: McpServer) {
     "call_starknet_contract",
     "Call a read-only function on a contract",
     {
-      contractAddress: z.string().describe("Contract address or StarkNet ID"),
+      contractAddress: z.string().describe("Contract address or Starknet ID"),
       entrypoint: z.string().describe("Function name to call"),
       calldata: z.array(z.string()).optional().describe("Call data array (optional)"),
       resultTypes: z.array(z.enum(['felt', 'uint256', 'address', 'string'])).optional().describe("Expected return types for each result value (e.g., ['felt', 'uint256', 'address'])"),
@@ -465,7 +465,7 @@ export function registerTools(server: McpServer) {
     },
     async ({ contractAddress, entrypoint, calldata = [], resultTypes, network = "mainnet" }) => {
       try {
-        // Resolve contract address if it's a StarkNet ID
+        // Resolve contract address if it's a Starknet ID
         const resolvedContractAddress = await services.utils.resolveNameOrAddress(contractAddress, network);
         
         const rawResult = await services.callContract({
@@ -505,14 +505,14 @@ export function registerTools(server: McpServer) {
     "get_starknet_contract_class",
     "Get the class (ABI and other information) of a contract",
     {
-      contractAddress: z.string().describe("Contract address or StarkNet ID"),
+      contractAddress: z.string().describe("Contract address or Starknet ID"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ contractAddress, network = "mainnet" }) => {
       try {
         const provider = services.getProvider(network);
         
-        // Resolve contract address if it's a StarkNet ID
+        // Resolve contract address if it's a Starknet ID
         const resolvedContractAddress = await services.utils.resolveNameOrAddress(contractAddress, network);
         const formattedAddress = services.parseStarknetAddress(resolvedContractAddress);
         
@@ -547,12 +547,12 @@ export function registerTools(server: McpServer) {
     "get_starknet_token_info",
     "Get information about a token",
     {
-      tokenAddress: z.string().describe("Token contract address or StarkNet ID"),
+      tokenAddress: z.string().describe("Token contract address or Starknet ID"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ tokenAddress, network = "mainnet" }) => {
       try {
-        // Resolve token address if it's a StarkNet ID
+        // Resolve token address if it's a Starknet ID
         const resolvedTokenAddress = await services.utils.resolveNameOrAddress(tokenAddress, network);
         
         const tokenInfo = await services.getTokenInfo(resolvedTokenAddress, network);
@@ -580,14 +580,14 @@ export function registerTools(server: McpServer) {
     "check_starknet_nft_ownership",
     "Check if an address owns a specific NFT",
     {
-      tokenAddress: z.string().describe("NFT contract address or StarkNet ID"),
+      tokenAddress: z.string().describe("NFT contract address or Starknet ID"),
       tokenId: z.string().describe("Token ID to check"),
-      ownerAddress: z.string().describe("Owner's Starknet address or StarkNet ID to check against"),
+      ownerAddress: z.string().describe("Owner's Starknet address or Starknet ID to check against"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ tokenAddress, tokenId, ownerAddress, network = "mainnet" }) => {
       try {
-        // Resolve addresses if they're StarkNet IDs
+        // Resolve addresses if they're Starknet IDs
         const resolvedTokenAddress = await services.utils.resolveNameOrAddress(tokenAddress, network);
         const resolvedOwnerAddress = await services.utils.resolveNameOrAddress(ownerAddress, network);
         
@@ -620,13 +620,13 @@ export function registerTools(server: McpServer) {
     "get_starknet_nft_balance",
     "Get the number of NFTs owned by an address for a specific collection",
     {
-      tokenAddress: z.string().describe("NFT contract address or StarkNet ID"),
-      ownerAddress: z.string().describe("Owner's Starknet address or StarkNet ID"),
+      tokenAddress: z.string().describe("NFT contract address or Starknet ID"),
+      ownerAddress: z.string().describe("Owner's Starknet address or Starknet ID"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ tokenAddress, ownerAddress, network = "mainnet" }) => {
       try {
-        // Resolve addresses if they're StarkNet IDs
+        // Resolve addresses if they're Starknet IDs
         const resolvedTokenAddress = await services.utils.resolveNameOrAddress(tokenAddress, network);
         const resolvedOwnerAddress = await services.utils.resolveNameOrAddress(ownerAddress, network);
         
@@ -658,12 +658,12 @@ export function registerTools(server: McpServer) {
     "get_starknet_token_supply",
     "Get the total supply of a token",
     {
-      tokenAddress: z.string().describe("Token contract address or StarkNet ID"),
+      tokenAddress: z.string().describe("Token contract address or Starknet ID"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ tokenAddress, network = "mainnet" }) => {
       try {
-        // Resolve token address if it's a StarkNet ID
+        // Resolve token address if it's a Starknet ID
         const resolvedTokenAddress = await services.utils.resolveNameOrAddress(tokenAddress, network);
         
         const supply = await services.getTokenTotalSupply(resolvedTokenAddress, network);
@@ -727,7 +727,7 @@ export function registerTools(server: McpServer) {
     {
       privateKey: z.string().describe("Private key of the sender account"),
       from: z.string().describe("Sender's Starknet address"),
-      to: z.string().describe("Recipient's Starknet address or StarkNet ID"),
+      to: z.string().describe("Recipient's Starknet address or Starknet ID"),
       amount: z.string().describe("Amount to transfer in wei"),
       maxFee: z.string().optional().describe("Maximum fee to pay (optional)"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
@@ -770,7 +770,7 @@ export function registerTools(server: McpServer) {
     {
       privateKey: z.string().describe("Private key of the sender account"),
       from: z.string().describe("Sender's Starknet address"),
-      to: z.string().describe("Recipient's Starknet address or StarkNet ID"),
+      to: z.string().describe("Recipient's Starknet address or Starknet ID"),
       amount: z.string().describe("Amount to transfer in wei"),
       maxFee: z.string().optional().describe("Maximum fee to pay (optional)"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
@@ -813,8 +813,8 @@ export function registerTools(server: McpServer) {
     {
       privateKey: z.string().describe("Private key of the sender account"),
       from: z.string().describe("Sender's Starknet address"),
-      to: z.string().describe("Recipient's Starknet address or StarkNet ID"),
-      tokenAddress: z.string().describe("Token contract address or StarkNet ID"),
+      to: z.string().describe("Recipient's Starknet address or Starknet ID"),
+      tokenAddress: z.string().describe("Token contract address or Starknet ID"),
       amount: z.string().describe("Amount to transfer (in token's smallest unit)"),
       maxFee: z.string().optional().describe("Maximum fee to pay (optional)"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
@@ -858,7 +858,7 @@ export function registerTools(server: McpServer) {
     {
       privateKey: z.string().describe("Private key of the sender account"),
       accountAddress: z.string().describe("Sender's Starknet address"),
-      contractAddress: z.string().describe("Contract address or StarkNet ID"),
+      contractAddress: z.string().describe("Contract address or Starknet ID"),
       entrypoint: z.string().describe("Function name to call"),
       calldata: z.array(z.string()).optional().describe("Call data array (optional)"),
       maxFee: z.string().optional().describe("Maximum fee to pay (optional)"),

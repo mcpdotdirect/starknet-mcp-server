@@ -149,7 +149,7 @@ export function registerResources(server: McpServer) {
         const network = params.network as string;
         const address = params.address as string;
         
-        // Try to resolve the address if it's a StarkNet ID
+        // Try to resolve the address if it's a Starknet ID
         const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
         const ethBalance = await services.getETHBalance(resolvedAddress, network);
         const provider = services.getProvider(network);
@@ -315,7 +315,7 @@ export function registerResources(server: McpServer) {
         const network = params.network as string;
         const address = params.address as string;
         
-        // Try to resolve the address if it's a StarkNet ID
+        // Try to resolve the address if it's a Starknet ID
         const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
         const profile = await services.getStarkProfile(resolvedAddress, network);
         

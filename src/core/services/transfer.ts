@@ -18,7 +18,7 @@ interface TransferResult {
 interface TransferBaseParams {
   privateKey: string;
   from: string;
-  to: string; // Can be an address or a StarkNet ID
+  to: string; // Can be an address or a Starknet ID
   amount: string | bigint;
   maxFee?: string | bigint;
 }
@@ -38,7 +38,7 @@ async function prepareTransfer(
   const amount = typeof params.amount === 'string' ? BigInt(params.amount) : params.amount;
   const fromAddress = parseStarknetAddress(params.from);
   
-  // Resolve the 'to' parameter which could be either an address or a StarkNet ID
+  // Resolve the 'to' parameter which could be either an address or a Starknet ID
   const toAddress = parseStarknetAddress(await utils.resolveNameOrAddress(params.to, network));
   
   // Create account instance
@@ -185,7 +185,7 @@ export async function executeContract(
   params: {
     privateKey: string;
     accountAddress: string;
-    contractAddress: string; // Can be an address or a StarkNet ID
+    contractAddress: string; // Can be an address or a Starknet ID
     entrypoint: string;
     calldata?: any[];
     maxFee?: string | bigint;
@@ -196,7 +196,7 @@ export async function executeContract(
     const provider = getProvider(network);
     const accountAddress = parseStarknetAddress(params.accountAddress);
     
-    // Resolve the contract address which could be either an address or a StarkNet ID
+    // Resolve the contract address which could be either an address or a Starknet ID
     const contractAddress = parseStarknetAddress(
       await utils.resolveNameOrAddress(params.contractAddress, network)
     );

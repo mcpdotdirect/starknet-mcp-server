@@ -104,8 +104,8 @@ export const utils = {
   },
 
   /**
-   * Resolve a StarkNet ID name to an address or return the address if already valid
-   * @param nameOrAddress StarkNet name (starknet.id) or address
+   * Resolve a Starknet ID name to an address or return the address if already valid
+   * @param nameOrAddress Starknet name (starknet.id) or address
    * @param network Network name (mainnet, sepolia)
    * @returns The resolved address
    * @throws Error if name cannot be resolved or address is invalid
@@ -129,20 +129,20 @@ export const utils = {
       // Create StarknetIdNavigator instance
       const navigator = new StarknetIdNavigator(provider, chainId);
       
-      // Check if it's a valid StarkNet domain
+      // Check if it's a valid Starknet domain
       if (starknetIdUtils.isStarkDomain(nameOrAddress)) {
         // Make sure it has .stark suffix
         const name = nameOrAddress.endsWith('.stark') ? nameOrAddress : `${nameOrAddress}.stark`;
         const address = await navigator.getAddressFromStarkName(name);
         
         if (!address || address === '0x0') {
-          throw new Error(`Could not resolve StarkNet ID: ${name}`);
+          throw new Error(`Could not resolve Starknet ID: ${name}`);
         }
         
         return address;
       }
       
-      throw new Error(`Invalid address or unresolvable StarkNet ID: ${nameOrAddress}`);
+      throw new Error(`Invalid address or unresolvable Starknet ID: ${nameOrAddress}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Error resolving name or address: ${errorMessage}`);

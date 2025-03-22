@@ -91,7 +91,7 @@ export function getContract(
 }
 
 /**
- * Parse a StarkNet address to ensure it's properly formatted
+ * Parse a Starknet address to ensure it's properly formatted
  * @param address The address to parse
  * @returns The formatted address
  */
