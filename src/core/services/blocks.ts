@@ -1,48 +1,40 @@
 import { getProvider } from './clients.js';
+import { BlockIdentifier } from 'starknet';
 
 /**
  * Get block details
  * @param blockIdentifier Block number, hash, or tag ('latest', 'pending')
- * @param network Network name (mainnet, goerli, sepolia)
+ * @param network Network name (mainnet, sepolia)
  * @returns Block details
  */
 export async function getBlock(
-  blockIdentifier: string | number = 'latest',
+  blockIdentifier: BlockIdentifier = 'latest',
   network = 'mainnet'
-): Promise<any> {
+) {
   const provider = getProvider(network);
   
-  // Handle different types of block identifiers
-  let identifier: string | number = blockIdentifier;
-  
-  // Convert numeric string to number if it's a block number
-  if (typeof blockIdentifier === 'string' && /^\d+$/.test(blockIdentifier)) {
-    identifier = parseInt(blockIdentifier, 10);
-  }
-  
-  const block = await provider.getBlock(identifier);
-  return block;
+  // No need for type conversion - StarknetJS handles this directly
+  return provider.getBlock(blockIdentifier);
 }
 
 /**
  * Get the latest block number
- * @param network Network name (mainnet, goerli, sepolia)
+ * @param network Network name (mainnet, sepolia)
  * @returns The latest block number
  */
 export async function getBlockNumber(network = 'mainnet'): Promise<number> {
   const provider = getProvider(network);
-  const blockNumber = await provider.getBlockNumber();
-  return blockNumber;
+  return provider.getBlockNumber();
 }
 
 /**
  * Get transactions in a specific block
  * @param blockIdentifier Block number, hash, or tag ('latest', 'pending')
- * @param network Network name (mainnet, goerli, sepolia)
+ * @param network Network name (mainnet, sepolia)
  * @returns Array of transaction hashes in the block
  */
 export async function getBlockTransactions(
-  blockIdentifier: string | number = 'latest',
+  blockIdentifier: BlockIdentifier = 'latest',
   network = 'mainnet'
 ): Promise<string[]> {
   const block = await getBlock(blockIdentifier, network);

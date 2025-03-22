@@ -1,6 +1,4 @@
 import { getProvider, getContract, parseStarknetAddress } from './clients.js';
-import { uint256, num } from 'starknet';
-import { CallData } from 'starknet';
 import { utils as helpers } from './utils.js';
 
 // Token contract addresses (same for all networks)
@@ -26,6 +24,55 @@ function formatAmount(amount: bigint, decimals: number): string {
 }
 
 /**
+ * Get a token balance (any ERC20 token including ETH/STRK)
+ * @param tokenAddress Token contract address
+ * @param ownerAddress Owner address
+ * @param network Network name (mainnet, sepolia)
+ * @returns Token balance information
+ */
+async function getTokenBalance(
+  tokenAddress: string, 
+  ownerAddress: string, 
+  network = 'mainnet'
+): Promise<{
+  raw: bigint;
+  formatted: string;
+  decimals: number;
+}> {
+  const provider = getProvider(network);
+  const formattedTokenAddress = parseStarknetAddress(tokenAddress);
+  const formattedOwnerAddress = parseStarknetAddress(ownerAddress);
+  
+  // Create contract instance
+  const contract = getContract(formattedTokenAddress, provider, network);
+  
+  try {
+    // Get balance and decimals in parallel
+    const [balanceResponse, decimalsResponse] = await Promise.all([
+      contract.call('balanceOf', [formattedOwnerAddress]),
+      contract.call('decimals', [])
+    ]);
+    
+    // Parse the responses
+    const balance = BigInt(balanceResponse.toString());
+    const decimals = Number(decimalsResponse.toString());
+    
+    return {
+      raw: balance,
+      formatted: formatAmount(balance, decimals),
+      decimals
+    };
+  } catch (error) {
+    console.error(`Error fetching token balance for ${tokenAddress}:`, error);
+    return {
+      raw: BigInt(0),
+      formatted: '0.0',
+      decimals: 18 // Default for most tokens
+    };
+  }
+}
+
+/**
  * Get the ETH (or native token) balance for an address
  * @param address Starknet address
  * @param network Network name (mainnet, sepolia)
@@ -35,29 +82,11 @@ export async function getETHBalance(
   address: string, 
   network = 'mainnet'
 ): Promise<{ wei: bigint; ether: string }> {
-  const provider = getProvider(network);
-  const formattedAddress = parseStarknetAddress(address);
-  
-  // ETH is managed by the ETH contract
-  const contractAddress = TOKEN_ADDRESSES.ETH;
-  const ethContract = getContract(contractAddress, provider, network);
-  
-  // Get the class hash to fetch the ABI
-  const classHash = await provider.getClassHashAt(ethContract.address, 'latest');
-  const contractClass = await provider.getClass(classHash, 'latest');
-  
-  // Attach the ABI
-  ethContract.attachABI(contractClass.abi);
-  
-  // Call balanceOf
-  const balanceResponse = await ethContract.balanceOf(formattedAddress);
-  
-  // Parse the balance (uint256)
-  const balanceWei = uint256.uint256ToBN(balanceResponse.balance);
+  const result = await getTokenBalance(TOKEN_ADDRESSES.ETH, address, network);
   
   return {
-    wei: balanceWei,
-    ether: formatAmount(balanceWei, 18)
+    wei: result.raw,
+    ether: result.formatted
   };
 }
 
@@ -71,33 +100,11 @@ export async function getSTRKBalance(
   address: string, 
   network = 'mainnet'
 ): Promise<{ wei: bigint; formatted: string }> {
-  const provider = getProvider(network);
-  const formattedAddress = parseStarknetAddress(address);
-  
-  // STRK token contract
-  const contractAddress = TOKEN_ADDRESSES.STRK;
-  const strkContract = getContract(contractAddress, provider, network);
-  
-  // Get the class hash to fetch the ABI
-  const classHash = await provider.getClassHashAt(strkContract.address, 'latest');
-  const contractClass = await provider.getClass(classHash, 'latest');
-  
-  // Attach the ABI
-  strkContract.attachABI(contractClass.abi);
-  
-  // Call balanceOf and get decimals
-  const [balanceResponse, decimalsResult] = await Promise.all([
-    strkContract.balanceOf(formattedAddress),
-    strkContract.decimals()
-  ]);
-  
-  // Parse the balance (uint256)
-  const balanceWei = uint256.uint256ToBN(balanceResponse.balance);
-  const decimals = Number(decimalsResult);
+  const result = await getTokenBalance(TOKEN_ADDRESSES.STRK, address, network);
   
   return {
-    wei: balanceWei,
-    formatted: formatAmount(balanceWei, decimals)
+    wei: result.raw,
+    formatted: result.formatted
   };
 }
 
@@ -114,7 +121,7 @@ export async function getNativeTokenBalances(
   eth: { wei: bigint; ether: string };
   strk: { wei: bigint; formatted: string };
 }> {
-  // Get both ETH and STRK balances in parallel
+  // Get both ETH and STRK balances in parallel for efficiency
   const [ethBalance, strkBalance] = await Promise.all([
     getETHBalance(address, network),
     getSTRKBalance(address, network)
@@ -128,6 +135,7 @@ export async function getNativeTokenBalances(
 
 /**
  * Get the balance of an ERC20 token for an address
+ * This excludes native tokens (ETH/STRK) which have their own dedicated functions
  * @param tokenAddress Token contract address
  * @param ownerAddress Owner address
  * @param network Network name (mainnet, sepolia)
@@ -145,88 +153,43 @@ export async function getERC20Balance(
     decimals: number;
   }
 }> {
-  // Check if this is a native token request
-  if (tokenAddress.toLowerCase() === TOKEN_ADDRESSES.ETH.toLowerCase()) {
-    const balance = await getETHBalance(ownerAddress, network);
-    return {
-      raw: balance.wei,
-      formatted: balance.ether,
-      token: {
-        symbol: 'ETH',
-        decimals: 18
-      }
-    };
-  } else if (tokenAddress.toLowerCase() === TOKEN_ADDRESSES.STRK.toLowerCase()) {
-    const balance = await getSTRKBalance(ownerAddress, network);
-    return {
-      raw: balance.wei,
-      formatted: balance.formatted,
-      token: {
-        symbol: 'STRK',
-        decimals: 18
-      }
-    };
-  }
-
-  const provider = getProvider(network);
-  const formattedTokenAddress = parseStarknetAddress(tokenAddress);
-  const formattedOwnerAddress = parseStarknetAddress(ownerAddress);
-
-  // Create token contract
-  const tokenContract = getContract(formattedTokenAddress, provider, network);
   
-  // Get class hash and class to fetch the ABI
-  const classHash = await provider.getClassHashAt(formattedTokenAddress, 'latest');
-  const contractClass = await provider.getClass(classHash, 'latest');
+  // For standard ERC20 token balance retrieval
+  const balanceInfo = await getTokenBalance(tokenAddress, ownerAddress, network);
   
-  // Attach the ABI
-  tokenContract.attachABI(contractClass.abi);
-
-  // Get token details (symbol and decimals)
-  const [symbolResult, decimalsResult, balanceResponse] = await Promise.all([
-    tokenContract.symbol(),
-    tokenContract.decimals(),
-    tokenContract.balanceOf(formattedOwnerAddress)
-  ]);
-
-  // Parse token details and balance
-  let parsedSymbol: string;
-  let balance: bigint;
-  
-  // Parse symbol - handle both numeric and string representations
-  if (typeof symbolResult === 'bigint') {
-    // If symbol is returned as a felt (bigint), convert to string
-    parsedSymbol = helpers.feltToString(helpers.toFelt(symbolResult));
-  } else if (typeof symbolResult === 'string') {
-    parsedSymbol = symbolResult;
-  } else {
-    // If it's an array or object, try to stringify it
-    parsedSymbol = symbolResult.toString();
-  }
-  
-  // Parse decimals
-  const parsedDecimals = Number(decimalsResult);
-  
-  // Parse balance - handle different return formats
-  if (balanceResponse.balance) {
-    // Some tokens return { balance: uint256 }
-    balance = uint256.uint256ToBN(balanceResponse.balance);
-  } else if (typeof balanceResponse === 'object' && 'low' in balanceResponse && 'high' in balanceResponse) {
-    // Some tokens return uint256 directly
-    balance = uint256.uint256ToBN(balanceResponse);
-  } else {
-    // Some tokens return a single felt
-    balance = BigInt(balanceResponse.toString());
-  }
-
-  return {
-    raw: balance,
-    formatted: formatAmount(balance, parsedDecimals),
-    token: {
-      symbol: parsedSymbol,
-      decimals: parsedDecimals
+  try {
+    // Get token symbol
+    const provider = getProvider(network);
+    const contract = getContract(parseStarknetAddress(tokenAddress), provider, network);
+    const symbolResponse = await contract.call('symbol', []);
+    
+    // Parse symbol
+    let symbol: string;
+    if (typeof symbolResponse === 'bigint') {
+      symbol = helpers.feltToString(helpers.toFelt(symbolResponse));
+    } else {
+      symbol = String(symbolResponse);
     }
-  };
+    
+    return {
+      raw: balanceInfo.raw,
+      formatted: balanceInfo.formatted,
+      token: {
+        symbol,
+        decimals: balanceInfo.decimals
+      }
+    };
+  } catch (error) {
+    console.error(`Error fetching token info for ${tokenAddress}:`, error);
+    return {
+      raw: balanceInfo.raw,
+      formatted: balanceInfo.formatted,
+      token: {
+        symbol: 'UNKNOWN',
+        decimals: balanceInfo.decimals
+      }
+    };
+  }
 }
 
 /**
@@ -249,41 +212,25 @@ export async function isNFTOwner(
     const formattedOwnerAddress = parseStarknetAddress(ownerAddress);
     
     // Create NFT contract
-    const nftContract = getContract(formattedTokenAddress, provider, network);
-    
-    // Get class hash and class to fetch the ABI
-    const classHash = await provider.getClassHashAt(formattedTokenAddress, 'latest');
-    const contractClass = await provider.getClass(classHash, 'latest');
-    
-    // Attach the ABI
-    nftContract.attachABI(contractClass.abi);
+    const contract = getContract(formattedTokenAddress, provider, network);
     
     // Convert tokenId to bigint if it's a string
     const tokenIdBigInt = typeof tokenId === 'string' ? BigInt(tokenId) : tokenId;
     
-    // Convert tokenId to uint256
-    const tokenIdUint256 = helpers.bigintToUint256(tokenIdBigInt);
+    // Call ownerOf directly - use low and high parts for Uint256 representation
+    const tokenIdObj = {
+      low: tokenIdBigInt.toString(),
+      high: '0' // For most NFTs, tokenId is below 2^128 so high part is 0
+    };
     
-    // Call ownerOf
-    const ownerResponse = await nftContract.ownerOf(tokenIdUint256);
+    const response = await contract.call('ownerOf', [tokenIdObj]);
     
-    // Parse owner response
-    let actualOwner: string;
-    if (typeof ownerResponse === 'string') {
-      actualOwner = ownerResponse;
-    } else if (typeof ownerResponse === 'bigint') {
-      actualOwner = helpers.formatAddress(ownerResponse);
-    } else if (ownerResponse.owner) {
-      // Handle case where response is { owner: '0x...' }
-      const owner = ownerResponse.owner;
-      actualOwner = typeof owner === 'bigint' ? helpers.formatAddress(owner) : owner.toString();
-    } else {
-      actualOwner = ownerResponse.toString();
-    }
+    // Parse owner address from result
+    const actualOwner = String(response).toLowerCase();
     
-    return actualOwner.toLowerCase() === formattedOwnerAddress.toLowerCase();
-  } catch (error: any) {
-    console.error(`Error checking NFT ownership: ${error.message}`);
+    return actualOwner === formattedOwnerAddress.toLowerCase();
+  } catch (error) {
+    console.error(`Error checking NFT ownership:`, error);
     return false;
   }
 }
@@ -300,38 +247,21 @@ export async function getERC721Balance(
   ownerAddress: string,
   network = 'mainnet'
 ): Promise<bigint> {
-  const provider = getProvider(network);
-  const formattedTokenAddress = parseStarknetAddress(tokenAddress);
-  const formattedOwnerAddress = parseStarknetAddress(ownerAddress);
-  
-  // Create NFT contract
-  const nftContract = getContract(formattedTokenAddress, provider, network);
-  
-  // Get class hash and class to fetch the ABI
-  const classHash = await provider.getClassHashAt(formattedTokenAddress, 'latest');
-  const contractClass = await provider.getClass(classHash, 'latest');
-  
-  // Attach the ABI
-  nftContract.attachABI(contractClass.abi);
-  
-  // Call balanceOf
-  const balanceResponse = await nftContract.balanceOf(formattedOwnerAddress);
-  
-  // Parse balance
-  let balance: bigint;
-  if (balanceResponse.balance) {
-    // Some tokens return { balance: uint256 }
-    balance = uint256.uint256ToBN(balanceResponse.balance);
-  } else if (typeof balanceResponse === 'object' && 'low' in balanceResponse && 'high' in balanceResponse) {
-    // Some tokens return uint256 directly
-    balance = uint256.uint256ToBN(balanceResponse);
-  } else if (typeof balanceResponse === 'bigint') {
-    // Some tokens return a single felt as bigint
-    balance = balanceResponse;
-  } else {
-    // Other formats
-    balance = BigInt(balanceResponse.toString());
+  try {
+    const provider = getProvider(network);
+    const formattedTokenAddress = parseStarknetAddress(tokenAddress);
+    const formattedOwnerAddress = parseStarknetAddress(ownerAddress);
+    
+    // Create NFT contract
+    const contract = getContract(formattedTokenAddress, provider, network);
+    
+    // Call balanceOf directly
+    const response = await contract.call('balanceOf', [formattedOwnerAddress]);
+    
+    // Parse response directly to BigInt
+    return BigInt(response.toString());
+  } catch (error) {
+    console.error(`Error fetching NFT balance:`, error);
+    return BigInt(0);
   }
-  
-  return balance;
 } 

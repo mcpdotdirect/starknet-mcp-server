@@ -133,6 +133,70 @@ export function registerTools(server: McpServer) {
     }
   );
   
+  // Get STRK token balance
+  server.tool(
+    "get_starknet_strk_balance",
+    "Get the STRK token balance for a Starknet address or StarkNet ID",
+    {
+      address: z.string().describe("Starknet address or StarkNet ID (with or without .stark)"),
+      network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
+    },
+    async ({ address, network = "mainnet" }) => {
+      try {
+        // Resolve address if it's a StarkNet ID
+        const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
+        const balance = await services.getSTRKBalance(resolvedAddress, network);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify(balance, (key, value) => 
+              typeof value === 'bigint' ? value.toString() : value, 2)
+          }]
+        };
+      } catch (error: any) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error: ${error.message || "Unknown error occurred"}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+  
+  // Get all native token balances (ETH and STRK)
+  server.tool(
+    "get_starknet_native_balances",
+    "Get all native token balances (ETH and STRK) for a Starknet address or StarkNet ID",
+    {
+      address: z.string().describe("Starknet address or StarkNet ID (with or without .stark)"),
+      network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
+    },
+    async ({ address, network = "mainnet" }) => {
+      try {
+        // Resolve address if it's a StarkNet ID
+        const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
+        const balances = await services.getNativeTokenBalances(resolvedAddress, network);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify(balances, (key, value) => 
+              typeof value === 'bigint' ? value.toString() : value, 2)
+          }]
+        };
+      } catch (error: any) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error: ${error.message || "Unknown error occurred"}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+  
   // STARKNET ID TOOLS
   
   // Resolve address to Starknet ID
@@ -277,7 +341,7 @@ export function registerTools(server: McpServer) {
           content: [{
             type: "text",
             text: JSON.stringify(block, (key, value) => 
-              typeof value === 'bigint' ? services.helpers.toFelt(value) : value, 2)
+              typeof value === 'bigint' ? services.utils.toFelt(value) : value, 2)
           }]
         };
       } catch (error: any) {
@@ -309,7 +373,7 @@ export function registerTools(server: McpServer) {
             text: JSON.stringify({
               blockIdentifier,
               transactions
-            }, (key, value) => typeof value === 'bigint' ? services.helpers.toFelt(value) : value, 2)
+            }, (key, value) => typeof value === 'bigint' ? services.utils.toFelt(value) : value, 2)
           }]
         };
       } catch (error: any) {
@@ -341,7 +405,7 @@ export function registerTools(server: McpServer) {
           content: [{
             type: "text",
             text: JSON.stringify(transaction, (key, value) => 
-              typeof value === 'bigint' ? services.helpers.toFelt(value) : value, 2)
+              typeof value === 'bigint' ? services.utils.toFelt(value) : value, 2)
           }]
         };
       } catch (error: any) {
@@ -371,7 +435,7 @@ export function registerTools(server: McpServer) {
           content: [{
             type: "text",
             text: JSON.stringify(receipt, (key, value) => 
-              typeof value === 'bigint' ? services.helpers.toFelt(value) : value, 2)
+              typeof value === 'bigint' ? services.utils.toFelt(value) : value, 2)
           }]
         };
       } catch (error: any) {
@@ -421,7 +485,7 @@ export function registerTools(server: McpServer) {
             text: JSON.stringify({
               result: formattedResult
             }, (key, value) => 
-              typeof value === 'bigint' ? services.helpers.toFelt(value) : value, 2)
+              typeof value === 'bigint' ? services.utils.toFelt(value) : value, 2)
           }]
         };
       } catch (error: any) {
@@ -461,7 +525,7 @@ export function registerTools(server: McpServer) {
             text: JSON.stringify({
               classHash,
               contractClass
-            }, (key, value) => typeof value === 'bigint' ? services.helpers.toFelt(value) : value, 2)
+            }, (key, value) => typeof value === 'bigint' ? services.utils.toFelt(value) : value, 2)
           }]
         };
       } catch (error: any) {
@@ -496,7 +560,7 @@ export function registerTools(server: McpServer) {
           content: [{
             type: "text",
             text: JSON.stringify(tokenInfo, (key, value) => 
-              typeof value === 'bigint' ? services.helpers.toFelt(value) : value, 2)
+              typeof value === 'bigint' ? services.utils.toFelt(value) : value, 2)
           }]
         };
       } catch (error: any) {
@@ -504,6 +568,327 @@ export function registerTools(server: McpServer) {
           content: [{
             type: "text",
             text: `Error: ${error.message || "Unknown error occurred"}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+  
+  // Check NFT ownership
+  server.tool(
+    "check_starknet_nft_ownership",
+    "Check if an address owns a specific NFT",
+    {
+      tokenAddress: z.string().describe("NFT contract address or StarkNet ID"),
+      tokenId: z.string().describe("Token ID to check"),
+      ownerAddress: z.string().describe("Owner's Starknet address or StarkNet ID to check against"),
+      network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
+    },
+    async ({ tokenAddress, tokenId, ownerAddress, network = "mainnet" }) => {
+      try {
+        // Resolve addresses if they're StarkNet IDs
+        const resolvedTokenAddress = await services.utils.resolveNameOrAddress(tokenAddress, network);
+        const resolvedOwnerAddress = await services.utils.resolveNameOrAddress(ownerAddress, network);
+        
+        const isOwner = await services.isNFTOwner(resolvedTokenAddress, tokenId, resolvedOwnerAddress, network);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              tokenAddress: resolvedTokenAddress,
+              tokenId,
+              ownerAddress: resolvedOwnerAddress,
+              isOwner
+            }, null, 2)
+          }]
+        };
+      } catch (error: any) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error checking NFT ownership: ${error.message || "Unknown error occurred"}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+  
+  // Get NFT balance (number of NFTs owned)
+  server.tool(
+    "get_starknet_nft_balance",
+    "Get the number of NFTs owned by an address for a specific collection",
+    {
+      tokenAddress: z.string().describe("NFT contract address or StarkNet ID"),
+      ownerAddress: z.string().describe("Owner's Starknet address or StarkNet ID"),
+      network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
+    },
+    async ({ tokenAddress, ownerAddress, network = "mainnet" }) => {
+      try {
+        // Resolve addresses if they're StarkNet IDs
+        const resolvedTokenAddress = await services.utils.resolveNameOrAddress(tokenAddress, network);
+        const resolvedOwnerAddress = await services.utils.resolveNameOrAddress(ownerAddress, network);
+        
+        const balance = await services.getERC721Balance(resolvedTokenAddress, resolvedOwnerAddress, network);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              tokenAddress: resolvedTokenAddress,
+              ownerAddress: resolvedOwnerAddress,
+              balance: balance.toString()
+            }, null, 2)
+          }]
+        };
+      } catch (error: any) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error getting NFT balance: ${error.message || "Unknown error occurred"}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+  
+  // Get token total supply
+  server.tool(
+    "get_starknet_token_supply",
+    "Get the total supply of a token",
+    {
+      tokenAddress: z.string().describe("Token contract address or StarkNet ID"),
+      network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
+    },
+    async ({ tokenAddress, network = "mainnet" }) => {
+      try {
+        // Resolve token address if it's a StarkNet ID
+        const resolvedTokenAddress = await services.utils.resolveNameOrAddress(tokenAddress, network);
+        
+        const supply = await services.getTokenTotalSupply(resolvedTokenAddress, network);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify(supply, (key, value) => 
+              typeof value === 'bigint' ? value.toString() : value, 2)
+          }]
+        };
+      } catch (error: any) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error getting token supply: ${error.message || "Unknown error occurred"}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+  
+  // Check transaction confirmation status
+  server.tool(
+    "check_starknet_transaction_status",
+    "Check if a transaction is confirmed (finalized)",
+    {
+      txHash: z.string().describe("Transaction hash"),
+      network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
+    },
+    async ({ txHash, network = "mainnet" }) => {
+      try {
+        const isConfirmed = await services.isTransactionConfirmed(txHash, network);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              txHash,
+              isConfirmed
+            }, null, 2)
+          }]
+        };
+      } catch (error: any) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error checking transaction status: ${error.message || "Unknown error occurred"}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+  
+  // TRANSFER TOOLS
+  
+  // Transfer ETH
+  server.tool(
+    "transfer_starknet_eth",
+    "Transfer ETH from one account to another",
+    {
+      privateKey: z.string().describe("Private key of the sender account"),
+      from: z.string().describe("Sender's Starknet address"),
+      to: z.string().describe("Recipient's Starknet address or StarkNet ID"),
+      amount: z.string().describe("Amount to transfer in wei"),
+      maxFee: z.string().optional().describe("Maximum fee to pay (optional)"),
+      network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
+    },
+    async ({ privateKey, from, to, amount, maxFee, network = "mainnet" }) => {
+      try {
+        const result = await services.transferETH({
+          privateKey,
+          from,
+          to,
+          amount,
+          maxFee
+        }, network);
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              txHash: result.txHash,
+              message: "Transaction submitted successfully. Use get_starknet_transaction or check_starknet_transaction_status to check status."
+            }, null, 2)
+          }]
+        };
+      } catch (error: any) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error transferring ETH: ${error.message || "Unknown error occurred"}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+  
+  // Transfer STRK
+  server.tool(
+    "transfer_starknet_strk",
+    "Transfer STRK from one account to another",
+    {
+      privateKey: z.string().describe("Private key of the sender account"),
+      from: z.string().describe("Sender's Starknet address"),
+      to: z.string().describe("Recipient's Starknet address or StarkNet ID"),
+      amount: z.string().describe("Amount to transfer in wei"),
+      maxFee: z.string().optional().describe("Maximum fee to pay (optional)"),
+      network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
+    },
+    async ({ privateKey, from, to, amount, maxFee, network = "mainnet" }) => {
+      try {
+        const result = await services.transferSTRK({
+          privateKey,
+          from,
+          to,
+          amount,
+          maxFee
+        }, network);
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              txHash: result.txHash,
+              message: "Transaction submitted successfully. Use get_starknet_transaction or check_starknet_transaction_status to check status."
+            }, null, 2)
+          }]
+        };
+      } catch (error: any) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error transferring STRK: ${error.message || "Unknown error occurred"}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+  
+  // Transfer ERC20 token
+  server.tool(
+    "transfer_starknet_token",
+    "Transfer ERC20 tokens from one account to another",
+    {
+      privateKey: z.string().describe("Private key of the sender account"),
+      from: z.string().describe("Sender's Starknet address"),
+      to: z.string().describe("Recipient's Starknet address or StarkNet ID"),
+      tokenAddress: z.string().describe("Token contract address or StarkNet ID"),
+      amount: z.string().describe("Amount to transfer (in token's smallest unit)"),
+      maxFee: z.string().optional().describe("Maximum fee to pay (optional)"),
+      network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
+    },
+    async ({ privateKey, from, to, tokenAddress, amount, maxFee, network = "mainnet" }) => {
+      try {
+        const result = await services.transferERC20({
+          privateKey,
+          from,
+          to,
+          tokenAddress,
+          amount,
+          maxFee
+        }, network);
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              txHash: result.txHash,
+              message: "Transaction submitted successfully. Use get_starknet_transaction or check_starknet_transaction_status to check status."
+            }, null, 2)
+          }]
+        };
+      } catch (error: any) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error transferring tokens: ${error.message || "Unknown error occurred"}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+  
+  // Execute contract call
+  server.tool(
+    "execute_starknet_contract",
+    "Execute a contract call (write operation)",
+    {
+      privateKey: z.string().describe("Private key of the sender account"),
+      accountAddress: z.string().describe("Sender's Starknet address"),
+      contractAddress: z.string().describe("Contract address or StarkNet ID"),
+      entrypoint: z.string().describe("Function name to call"),
+      calldata: z.array(z.string()).optional().describe("Call data array (optional)"),
+      maxFee: z.string().optional().describe("Maximum fee to pay (optional)"),
+      network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
+    },
+    async ({ privateKey, accountAddress, contractAddress, entrypoint, calldata, maxFee, network = "mainnet" }) => {
+      try {
+        const result = await services.executeContract({
+          privateKey,
+          accountAddress,
+          contractAddress,
+          entrypoint,
+          calldata,
+          maxFee
+        }, network);
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              txHash: result.txHash,
+              message: "Transaction submitted successfully. Use get_starknet_transaction or check_starknet_transaction_status to check status."
+            }, null, 2)
+          }]
+        };
+      } catch (error: any) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error executing contract: ${error.message || "Unknown error occurred"}`
           }],
           isError: true
         };

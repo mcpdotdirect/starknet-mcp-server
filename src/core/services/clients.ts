@@ -3,16 +3,23 @@ import {
   Account, 
   Contract, 
   ProviderInterface,
-  constants
+  constants,
+  validateAndParseAddress
 } from 'starknet';
-import { getRpcUrl, getChainId } from '../chains.js';
+import { getRpcUrl } from '../chains.js';
 
 // Cache for providers to avoid recreating them for each request
 const providerCache = new Map<string, RpcProvider>();
 
+// Map of network names to chain IDs for cleaner code
+const CHAIN_IDS = {
+  mainnet: constants.StarknetChainId.SN_MAIN,
+  sepolia: constants.StarknetChainId.SN_SEPOLIA
+};
+
 /**
  * Get a RPC provider for a specific network
- * @param network Network name (mainnet, goerli, sepolia)
+ * @param network Network name (mainnet, sepolia)
  * @returns RPC provider instance
  */
 export function getProvider(network = 'mainnet'): RpcProvider {
@@ -23,26 +30,14 @@ export function getProvider(network = 'mainnet'): RpcProvider {
     return providerCache.get(cacheKey)!;
   }
   
-  // Create a new provider
+  // Get the RPC URL for the network
   const rpcUrl = getRpcUrl(network);
   
-  // Map network name to Starknet.js chain ID constants
-  let chainId;
-  if (network === 'mainnet') {
-    chainId = constants.StarknetChainId.SN_MAIN;
-  } else if (network === 'sepolia') {
-    chainId = constants.StarknetChainId.SN_SEPOLIA;
-  } else {
-    // Default to mainnet if network is unknown
-    chainId = constants.StarknetChainId.SN_MAIN;
-  }
+  // Get chain ID, defaulting to mainnet if not recognized
+  const chainId = CHAIN_IDS[network as keyof typeof CHAIN_IDS] || CHAIN_IDS.mainnet;
   
-  const provider = new RpcProvider({
-    nodeUrl: rpcUrl,
-    chainId
-  });
-  
-  // Cache the provider
+  // Create and cache the provider
+  const provider = new RpcProvider({ nodeUrl: rpcUrl, chainId });
   providerCache.set(cacheKey, provider);
   
   return provider;
@@ -52,7 +47,7 @@ export function getProvider(network = 'mainnet'): RpcProvider {
  * Create an account instance for a specific network and private key
  * @param privateKey The private key in hex format (with or without 0x prefix)
  * @param accountAddress The address of the deployed account contract
- * @param network Network name (mainnet, goerli, sepolia)
+ * @param network Network name (mainnet, sepolia)
  * @returns Account instance
  */
 export function getAccount(
@@ -64,10 +59,11 @@ export function getAccount(
   
   // Ensure the private key has the proper format
   const formattedPrivateKey = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`;
+  const formattedAddress = parseStarknetAddress(accountAddress);
   
   return new Account(
     provider,
-    accountAddress,
+    formattedAddress,
     formattedPrivateKey
   );
 }
@@ -85,10 +81,11 @@ export function getContract(
   network = 'mainnet'
 ): Contract {
   const contractProvider = provider || getProvider(network);
+  const formattedAddress = parseStarknetAddress(contractAddress);
   
   return new Contract(
     [], // No ABI needed initially - can be set later using contract.attachABI()
-    contractAddress,
+    formattedAddress,
     contractProvider
   );
 }
@@ -99,9 +96,14 @@ export function getContract(
  * @returns The formatted address
  */
 export function parseStarknetAddress(address: string): string {
-  // Ensure the address has the proper format
-  if (!address.startsWith('0x')) {
-    return `0x${address}`;
+  try {
+    // Use StarknetJS's built-in validation
+    return validateAndParseAddress(address);
+  } catch (error) {
+    // If invalid, try to fix common issues - ensure 0x prefix
+    if (!address.startsWith('0x')) {
+      return parseStarknetAddress(`0x${address}`);
+    }
+    throw new Error(`Invalid Starknet address: ${address}`);
   }
-  return address;
 } 

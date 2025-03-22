@@ -1,6 +1,7 @@
 /**
  * Defines supported Starknet networks with their RPC URLs
  */
+import { constants } from 'starknet';
 
 export type NetworkConfig = {
   name: string;
@@ -12,12 +13,12 @@ export type NetworkConfig = {
 const networks: Record<string, NetworkConfig> = {
   mainnet: {
     name: 'mainnet',
-    chainId: 'SN_MAIN',
+    chainId: constants.StarknetChainId.SN_MAIN,
     rpcUrl: 'https://starknet-mainnet.public.blastapi.io'
   },
   sepolia: {
     name: 'sepolia',
-    chainId: 'SN_SEPOLIA',
+    chainId: constants.StarknetChainId.SN_SEPOLIA,
     rpcUrl: 'https://starknet-sepolia.public.blastapi.io'
   }
 };

@@ -25,7 +25,8 @@ export function registerResources(server: McpServer) {
               network,
               blockNumber,
               rpcUrl
-            }),
+            }, (key, value) => 
+              typeof value === 'bigint' ? value.toString() : value),
             mimeType: "application/json"
           }]
         };
@@ -88,7 +89,8 @@ export function registerResources(server: McpServer) {
         return {
           contents: [{
             uri: uri.toString(),
-            text: JSON.stringify(block),
+            text: JSON.stringify(block, (key, value) => 
+              typeof value === 'bigint' ? value.toString() : value),
             mimeType: "application/json"
           }]
         };
@@ -119,7 +121,8 @@ export function registerResources(server: McpServer) {
         return {
           contents: [{
             uri: uri.toString(),
-            text: JSON.stringify(block),
+            text: JSON.stringify(block, (key, value) => 
+              typeof value === 'bigint' ? value.toString() : value),
             mimeType: "application/json"
           }]
         };
@@ -146,28 +149,30 @@ export function registerResources(server: McpServer) {
         const network = params.network as string;
         const address = params.address as string;
         
-        const ethBalance = await services.getETHBalance(address, network);
+        // Try to resolve the address if it's a StarkNet ID
+        const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
+        const ethBalance = await services.getETHBalance(resolvedAddress, network);
         const provider = services.getProvider(network);
-        const formattedAddress = services.parseStarknetAddress(address);
         
         // Get class hash and class
-        const classHash = await provider.getClassHashAt(formattedAddress, 'latest');
+        const classHash = await provider.getClassHashAt(resolvedAddress, 'latest');
         const contractClass = await provider.getClass(classHash, 'latest');
         
         // Get Starknet ID if available
-        const starknetId = await services.getStarkName(address, network);
+        const starknetId = await services.getStarkName(resolvedAddress, network);
         
         return {
           contents: [{
             uri: uri.toString(),
             text: JSON.stringify({
-              address: formattedAddress,
+              address: resolvedAddress,
               ethBalance,
               classHash,
               contractType: contractClass.abi ? "Contract" : "EOA",
               starknetId: starknetId || null,
               hasStarknetId: !!starknetId
-            }),
+            }, (key, value) => 
+              typeof value === 'bigint' ? value.toString() : value),
             mimeType: "application/json"
           }]
         };
@@ -205,7 +210,8 @@ export function registerResources(server: McpServer) {
             text: JSON.stringify({
               transaction,
               receipt
-            }),
+            }, (key, value) => 
+              typeof value === 'bigint' ? value.toString() : value),
             mimeType: "application/json"
           }]
         };
@@ -309,15 +315,18 @@ export function registerResources(server: McpServer) {
         const network = params.network as string;
         const address = params.address as string;
         
-        const profile = await services.getStarkProfile(address, network);
+        // Try to resolve the address if it's a StarkNet ID
+        const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
+        const profile = await services.getStarkProfile(resolvedAddress, network);
         
         return {
           contents: [{
             uri: uri.toString(),
             text: JSON.stringify(profile || {
-              address,
+              address: resolvedAddress,
               id: null
-            }),
+            }, (key, value) => 
+              typeof value === 'bigint' ? value.toString() : value),
             mimeType: "application/json"
           }]
         };

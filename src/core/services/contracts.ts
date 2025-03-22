@@ -1,5 +1,9 @@
 import { getProvider, parseStarknetAddress } from './clients.js';
+import { CallData, BlockTag } from 'starknet';
 import { utils as helpers } from './utils.js';
+
+// Default block tag to use for queries
+const DEFAULT_BLOCK_TAG: BlockTag = 'latest';
 
 /**
  * Read a contract's storage at a specific slot
@@ -16,13 +20,7 @@ export async function getStorageAt(
   const provider = getProvider(network);
   const formattedAddress = parseStarknetAddress(contractAddress);
   
-  const storageValue = await provider.getStorageAt(
-    formattedAddress,
-    key,
-    'latest'
-  );
-  
-  return storageValue;
+  return provider.getStorageAt(formattedAddress, key, DEFAULT_BLOCK_TAG);
 }
 
 /**
@@ -38,12 +36,7 @@ export async function getClassHashAt(
   const provider = getProvider(network);
   const formattedAddress = parseStarknetAddress(contractAddress);
   
-  const classHash = await provider.getClassHashAt(
-    formattedAddress,
-    'latest'
-  );
-  
-  return classHash;
+  return provider.getClassHashAt(formattedAddress, DEFAULT_BLOCK_TAG);
 }
 
 /**
@@ -55,16 +48,11 @@ export async function getClassHashAt(
 export async function getClass(
   classHash: string,
   network = 'mainnet'
-): Promise<any> {
+) {
   const provider = getProvider(network);
   const formattedClassHash = parseStarknetAddress(classHash);
   
-  const contractClass = await provider.getClass(
-    formattedClassHash,
-    'latest'
-  );
-  
-  return contractClass;
+  return provider.getClass(formattedClassHash, DEFAULT_BLOCK_TAG);
 }
 
 /**
@@ -80,36 +68,22 @@ export async function callContract(
     calldata?: any[];
   },
   network = 'mainnet'
-): Promise<any[]> {
+) {
   const provider = getProvider(network);
   const formattedAddress = parseStarknetAddress(params.contractAddress);
   
-  // Ensure calldata is properly formatted
+  // Format calldata with StarknetJS's CallData utility
   const calldata = params.calldata ? 
-    params.calldata.map(item => {
-      // If we're passing something that might be a bigint, ensure proper formatting
-      if (typeof item === 'bigint') {
-        return helpers.toFelt(item);
-      }
-      return item;
-    }) : 
+    CallData.compile(params.calldata) : 
     [];
   
   const result = await provider.callContract({
     contractAddress: formattedAddress,
     entrypoint: params.entrypoint,
     calldata
-  });
+  }, DEFAULT_BLOCK_TAG);
   
-  // Process result - convert any bigint values to hex strings
-  const processedResult = result.map(item => {
-    if (typeof item === 'bigint') {
-      return helpers.toFelt(item);
-    }
-    return item;
-  });
-  
-  return processedResult;
+  return result;
 }
 
 /**
@@ -123,13 +97,8 @@ export function formatCallResult(
   expectedTypes?: Array<'felt' | 'uint256' | 'address' | 'string'>
 ): any[] {
   if (!expectedTypes) {
-    // Default: treat all values as felts
-    return result.map(value => {
-      if (typeof value === 'bigint') {
-        return helpers.toFelt(value);
-      }
-      return value;
-    });
+    // Return raw results - modern StarknetJS returns properly formatted values
+    return result;
   }
   
   return result.map((value, index) => {
