@@ -3,25 +3,10 @@ import { uint256, num } from 'starknet';
 import { CallData } from 'starknet';
 import { utils as helpers } from './utils.js';
 
-// Token contract addresses by network
-type NetworkAddresses = {
-  [key: string]: string;
-};
-
-const TOKEN_ADDRESSES: {
-  ETH: NetworkAddresses;
-  STRK: NetworkAddresses;
-} = {
-  // ETH contract addresses
-  ETH: {
-    mainnet: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
-    sepolia: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
-  },
-  // STRK contract addresses
-  STRK: {
-    mainnet: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d',
-    sepolia: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d'
-  }
+// Token contract addresses (same for all networks)
+const TOKEN_ADDRESSES = {
+  ETH: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+  STRK: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d'
 };
 
 /**
@@ -54,7 +39,7 @@ export async function getETHBalance(
   const formattedAddress = parseStarknetAddress(address);
   
   // ETH is managed by the ETH contract
-  const contractAddress = TOKEN_ADDRESSES.ETH[network as keyof typeof TOKEN_ADDRESSES.ETH] || TOKEN_ADDRESSES.ETH.mainnet;
+  const contractAddress = TOKEN_ADDRESSES.ETH;
   const ethContract = getContract(contractAddress, provider, network);
   
   // Get the class hash to fetch the ABI
@@ -90,7 +75,7 @@ export async function getSTRKBalance(
   const formattedAddress = parseStarknetAddress(address);
   
   // STRK token contract
-  const contractAddress = TOKEN_ADDRESSES.STRK[network as keyof typeof TOKEN_ADDRESSES.STRK] || TOKEN_ADDRESSES.STRK.mainnet;
+  const contractAddress = TOKEN_ADDRESSES.STRK;
   const strkContract = getContract(contractAddress, provider, network);
   
   // Get the class hash to fetch the ABI
@@ -161,7 +146,7 @@ export async function getERC20Balance(
   }
 }> {
   // Check if this is a native token request
-  if (tokenAddress.toLowerCase() === TOKEN_ADDRESSES.ETH[network as keyof typeof TOKEN_ADDRESSES.ETH].toLowerCase()) {
+  if (tokenAddress.toLowerCase() === TOKEN_ADDRESSES.ETH.toLowerCase()) {
     const balance = await getETHBalance(ownerAddress, network);
     return {
       raw: balance.wei,
@@ -171,7 +156,7 @@ export async function getERC20Balance(
         decimals: 18
       }
     };
-  } else if (tokenAddress.toLowerCase() === TOKEN_ADDRESSES.STRK[network as keyof typeof TOKEN_ADDRESSES.STRK].toLowerCase()) {
+  } else if (tokenAddress.toLowerCase() === TOKEN_ADDRESSES.STRK.toLowerCase()) {
     const balance = await getSTRKBalance(ownerAddress, network);
     return {
       raw: balance.wei,

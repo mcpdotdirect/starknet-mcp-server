@@ -1,5 +1,6 @@
 import { hash, num, shortString, validateAndParseAddress } from 'starknet';
 import { uint256 } from 'starknet';
+import { getProvider } from './clients.js';
 
 /**
  * Utility functions for Starknet
@@ -80,6 +81,37 @@ export const utils = {
   },
 
   /**
+   * Resolve a StarkNet ID name to an address or return the address if already valid
+   * @param nameOrAddress StarkNet name (starknet.id) or address
+   * @param network Network name (mainnet, goerli, sepolia)
+   * @returns The resolved address
+   * @throws Error if name cannot be resolved or address is invalid
+   */
+  async resolveNameOrAddress(nameOrAddress: string, network = 'mainnet'): Promise<string> {
+    // If it's already a valid address, return it
+    if (this.isValidAddress(nameOrAddress)) {
+      return nameOrAddress;
+    }
+    
+    // If it's not a valid address, try to resolve it as a StarkNet ID
+    // Check if it has a .stark suffix, if not add it
+    const name = nameOrAddress.endsWith('.stark') ? nameOrAddress : `${nameOrAddress}.stark`;
+    
+    try {
+      const provider = getProvider(network);
+      const address = await provider.getAddressFromStarkName(name);
+      
+      if (!address || address === '0x0') {
+        throw new Error(`Could not resolve StarkNet ID: ${name}`);
+      }
+      
+      return address;
+    } catch (error) {
+      throw new Error(`Invalid address or unresolvable StarkNet ID: ${nameOrAddress}`);
+    }
+  },
+
+  /**
    * Calculate a contract address
    * @param salt A random salt
    * @param classHash The class hash
@@ -96,7 +128,7 @@ export const utils = {
       salt,
       classHash,
       constructorCalldata,
-      deployerAddress
+      deployerAddress || '0x0'
     );
   },
   
@@ -127,7 +159,11 @@ export const utils = {
    * @param value The BigInt value to convert
    */
   bigintToUint256(value: bigint): { low: string; high: string } {
-    return uint256.bnToUint256(value);
+    const uint = uint256.bnToUint256(value);
+    return {
+      low: uint.low.toString(),
+      high: uint.high.toString()
+    };
   },
 
   /**

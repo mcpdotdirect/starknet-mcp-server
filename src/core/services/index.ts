@@ -8,6 +8,7 @@ export * from './transactions.js';
 export * from './transfer.js';
 export * from './starknetid.js';
 export { utils as helpers } from './utils.js';
+export { utils } from './utils.js';
 
 // Re-export common types for convenience
 export type {

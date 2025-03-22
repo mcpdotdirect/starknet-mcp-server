@@ -69,14 +69,16 @@ export function registerTools(server: McpServer) {
   // Get ETH balance
   server.tool(
     "get_starknet_eth_balance",
-    "Get the ETH balance for a Starknet address",
+    "Get the ETH balance for a Starknet address or StarkNet ID",
     {
-      address: z.string().describe("Starknet address"),
+      address: z.string().describe("Starknet address or StarkNet ID (with or without .stark)"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ address, network = "mainnet" }) => {
       try {
-        const balance = await services.getETHBalance(address, network);
+        // Resolve address if it's a StarkNet ID
+        const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
+        const balance = await services.getETHBalance(resolvedAddress, network);
         return {
           content: [{
             type: "text",
@@ -99,15 +101,19 @@ export function registerTools(server: McpServer) {
   // Get ERC20 token balance
   server.tool(
     "get_starknet_token_balance",
-    "Get the token balance for a Starknet address",
+    "Get the token balance for a Starknet address or StarkNet ID",
     {
-      tokenAddress: z.string().describe("Token contract address"),
-      ownerAddress: z.string().describe("Owner's Starknet address"),
+      tokenAddress: z.string().describe("Token contract address or StarkNet ID"),
+      ownerAddress: z.string().describe("Owner's Starknet address or StarkNet ID"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ tokenAddress, ownerAddress, network = "mainnet" }) => {
       try {
-        const balance = await services.getERC20Balance(tokenAddress, ownerAddress, network);
+        // Resolve addresses if they're StarkNet IDs
+        const resolvedTokenAddress = await services.utils.resolveNameOrAddress(tokenAddress, network);
+        const resolvedOwnerAddress = await services.utils.resolveNameOrAddress(ownerAddress, network);
+        
+        const balance = await services.getERC20Balance(resolvedTokenAddress, resolvedOwnerAddress, network);
         return {
           content: [{
             type: "text",
@@ -134,7 +140,7 @@ export function registerTools(server: McpServer) {
     "resolve_starknet_name",
     "Get the Starknet ID for an address",
     {
-      address: z.string().describe("Starknet address to lookup"),
+      address: z.string().describe("Starknet address to lookup (must be a valid address, not a name)"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ address, network = "mainnet" }) => {
@@ -201,14 +207,17 @@ export function registerTools(server: McpServer) {
   // Get full Starknet profile
   server.tool(
     "get_starknet_profile",
-    "Get the full Starknet ID profile for an address",
+    "Get the full Starknet ID profile for an address or StarkNet ID",
     {
-      address: z.string().describe("Starknet address to lookup"),
+      address: z.string().describe("Starknet address or StarkNet ID to lookup"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ address, network = "mainnet" }) => {
       try {
-        const profile = await services.getStarkProfile(address, network);
+        // Resolve address if it's a StarkNet ID
+        const resolvedAddress = await services.utils.resolveNameOrAddress(address, network);
+        
+        const profile = await services.getStarkProfile(resolvedAddress, network);
         
         return {
           content: [{
@@ -384,7 +393,7 @@ export function registerTools(server: McpServer) {
     "call_starknet_contract",
     "Call a read-only function on a contract",
     {
-      contractAddress: z.string().describe("Contract address"),
+      contractAddress: z.string().describe("Contract address or StarkNet ID"),
       entrypoint: z.string().describe("Function name to call"),
       calldata: z.array(z.string()).optional().describe("Call data array (optional)"),
       resultTypes: z.array(z.enum(['felt', 'uint256', 'address', 'string'])).optional().describe("Expected return types for each result value (e.g., ['felt', 'uint256', 'address'])"),
@@ -392,8 +401,11 @@ export function registerTools(server: McpServer) {
     },
     async ({ contractAddress, entrypoint, calldata = [], resultTypes, network = "mainnet" }) => {
       try {
+        // Resolve contract address if it's a StarkNet ID
+        const resolvedContractAddress = await services.utils.resolveNameOrAddress(contractAddress, network);
+        
         const rawResult = await services.callContract({
-          contractAddress,
+          contractAddress: resolvedContractAddress,
           entrypoint,
           calldata
         }, network);
@@ -429,13 +441,16 @@ export function registerTools(server: McpServer) {
     "get_starknet_contract_class",
     "Get the class (ABI and other information) of a contract",
     {
-      contractAddress: z.string().describe("Contract address"),
+      contractAddress: z.string().describe("Contract address or StarkNet ID"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ contractAddress, network = "mainnet" }) => {
       try {
         const provider = services.getProvider(network);
-        const formattedAddress = services.parseStarknetAddress(contractAddress);
+        
+        // Resolve contract address if it's a StarkNet ID
+        const resolvedContractAddress = await services.utils.resolveNameOrAddress(contractAddress, network);
+        const formattedAddress = services.parseStarknetAddress(resolvedContractAddress);
         
         const classHash = await provider.getClassHashAt(formattedAddress, 'latest');
         const contractClass = await provider.getClass(classHash, 'latest');
@@ -468,12 +483,15 @@ export function registerTools(server: McpServer) {
     "get_starknet_token_info",
     "Get information about a token",
     {
-      tokenAddress: z.string().describe("Token contract address"),
+      tokenAddress: z.string().describe("Token contract address or StarkNet ID"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
     async ({ tokenAddress, network = "mainnet" }) => {
       try {
-        const tokenInfo = await services.getTokenInfo(tokenAddress, network);
+        // Resolve token address if it's a StarkNet ID
+        const resolvedTokenAddress = await services.utils.resolveNameOrAddress(tokenAddress, network);
+        
+        const tokenInfo = await services.getTokenInfo(resolvedTokenAddress, network);
         return {
           content: [{
             type: "text",

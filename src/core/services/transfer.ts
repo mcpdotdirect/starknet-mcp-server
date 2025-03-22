@@ -1,9 +1,6 @@
 import { getProvider, getAccount, getContract, parseStarknetAddress } from './clients.js';
 import { CallData, cairo, uint256, constants } from 'starknet';
-import { waitForTransaction } from './transactions.js';
-
-// The standard ERC20 transfer selector (function signature)
-const ERC20_TRANSFER_SELECTOR = '0x83afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e';
+import { utils } from './utils.js';
 
 /**
  * Transfer ETH (native token) from one account to another
@@ -15,7 +12,7 @@ export async function transferETH(
   params: {
     privateKey: string;
     from: string;
-    to: string;
+    to: string; // Can be an address or a StarkNet ID
     amount: string | bigint;
     maxFee?: string | bigint;
   },
@@ -28,7 +25,9 @@ export async function transferETH(
   const amount = typeof params.amount === 'string' ? BigInt(params.amount) : params.amount;
   
   const fromAddress = parseStarknetAddress(params.from);
-  const toAddress = parseStarknetAddress(params.to);
+  
+  // Resolve the 'to' parameter which could be either an address or a StarkNet ID
+  const toAddress = parseStarknetAddress(await utils.resolveNameOrAddress(params.to, network));
   
   // Create account instance
   const account = getAccount(params.privateKey, fromAddress, network);
@@ -39,7 +38,7 @@ export async function transferETH(
     entrypoint: 'transfer',
     calldata: CallData.compile({
       recipient: toAddress,
-      amount: { type: 'struct', low: amount.toString(), high: '0' }
+      amount: uint256.bnToUint256(amount)
     })
   };
   
@@ -62,7 +61,7 @@ export async function transferETH(
   
   return {
     txHash,
-    waitForConfirmation: () => waitForTransaction(txHash, {}, network)
+    waitForConfirmation: () => provider.waitForTransaction(txHash)
   };
 }
 
@@ -76,7 +75,7 @@ export async function transferERC20(
   params: {
     privateKey: string;
     from: string;
-    to: string;
+    to: string; // Can be an address or a StarkNet ID
     tokenAddress: string;
     amount: string | bigint;
     maxFee?: string | bigint;
@@ -86,10 +85,14 @@ export async function transferERC20(
   txHash: string;
   waitForConfirmation: () => Promise<any>;
 }> {
+  const provider = getProvider(network);
   const amount = typeof params.amount === 'string' ? BigInt(params.amount) : params.amount;
   
   const fromAddress = parseStarknetAddress(params.from);
-  const toAddress = parseStarknetAddress(params.to);
+  
+  // Resolve the 'to' parameter which could be either an address or a StarkNet ID
+  const toAddress = parseStarknetAddress(await utils.resolveNameOrAddress(params.to, network));
+  
   const tokenAddress = parseStarknetAddress(params.tokenAddress);
   
   // Create account instance
@@ -127,7 +130,7 @@ export async function transferERC20(
   
   return {
     txHash,
-    waitForConfirmation: () => waitForTransaction(txHash, {}, network)
+    waitForConfirmation: () => provider.waitForTransaction(txHash)
   };
 }
 
@@ -141,7 +144,7 @@ export async function executeContract(
   params: {
     privateKey: string;
     accountAddress: string;
-    contractAddress: string;
+    contractAddress: string; // Can be an address or a StarkNet ID
     entrypoint: string;
     calldata?: any[];
     maxFee?: string | bigint;
@@ -151,8 +154,11 @@ export async function executeContract(
   txHash: string;
   waitForConfirmation: () => Promise<any>;
 }> {
+  const provider = getProvider(network);
   const accountAddress = parseStarknetAddress(params.accountAddress);
-  const contractAddress = parseStarknetAddress(params.contractAddress);
+  
+  // Resolve the contract address which could be either an address or a StarkNet ID
+  const contractAddress = parseStarknetAddress(await utils.resolveNameOrAddress(params.contractAddress, network));
   
   // Create account instance
   const account = getAccount(params.privateKey, accountAddress, network);
@@ -183,6 +189,6 @@ export async function executeContract(
   
   return {
     txHash,
-    waitForConfirmation: () => waitForTransaction(txHash, {}, network)
+    waitForConfirmation: () => provider.waitForTransaction(txHash)
   };
 } 

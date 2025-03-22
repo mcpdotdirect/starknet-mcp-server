@@ -25,7 +25,17 @@ export function getProvider(network = 'mainnet'): RpcProvider {
   
   // Create a new provider
   const rpcUrl = getRpcUrl(network);
-  const chainId = getChainId(network);
+  
+  // Map network name to Starknet.js chain ID constants
+  let chainId;
+  if (network === 'mainnet') {
+    chainId = constants.StarknetChainId.SN_MAIN;
+  } else if (network === 'sepolia') {
+    chainId = constants.StarknetChainId.SN_SEPOLIA;
+  } else {
+    // Default to mainnet if network is unknown
+    chainId = constants.StarknetChainId.SN_MAIN;
+  }
   
   const provider = new RpcProvider({
     nodeUrl: rpcUrl,
