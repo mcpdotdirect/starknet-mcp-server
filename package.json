@@ -55,7 +55,7 @@
     "ai",
     "agent"
   ],
-  "author": "mcpdotdirect",
+  "author": "Etheral <etheral.eth.dev@gmail.com>",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"

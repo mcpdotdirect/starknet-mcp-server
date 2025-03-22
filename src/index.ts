@@ -7,9 +7,9 @@ async function main() {
     const server = await startServer();
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error("MCP Server running on stdio");
+    console.error("Starknet MCP Server running on stdio");
   } catch (error) {
-    console.error("Error starting MCP server:", error);
+    console.error("Error starting Starknet MCP server:", error);
     process.exit(1);
   }
 }
@@ -17,4 +17,4 @@ async function main() {
 main().catch((error) => {
   console.error("Fatal error in main():", error);
   process.exit(1);
-}); 
+});
