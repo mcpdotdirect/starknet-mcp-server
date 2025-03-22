@@ -8,6 +8,12 @@ const TOKEN_ADDRESSES = {
   STRK: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d'
 };
 
+// Default decimals for common tokens
+const TOKEN_DECIMALS = {
+  ETH: 18,
+  STRK: 18
+};
+
 // Common interface for all transfer operations
 interface TransferResult {
   txHash: string;
@@ -24,18 +30,59 @@ interface TransferBaseParams {
 }
 
 /**
+ * Converts a human-readable amount to token units
+ * @param amount The amount in human-readable form (e.g., "0.00001")
+ * @param decimals The number of decimals for the token
+ * @returns The amount in token units as BigInt
+ */
+function parseTokenAmount(amount: string | bigint, decimals: number): bigint {
+  // If amount is already a bigint, assume it's already in token units
+  if (typeof amount === 'bigint') {
+    return amount;
+  }
+  
+  // Handle decimal amounts
+  const amountStr = amount.toString();
+  
+  // Check if the amount contains a decimal point
+  if (amountStr.includes('.')) {
+    const [integerPart, fractionalPart = ''] = amountStr.split('.');
+    
+    // Ensure the fractional part isn't longer than allowed decimals
+    if (fractionalPart.length > decimals) {
+      throw new Error(`Amount has too many decimal places. Maximum allowed: ${decimals}`);
+    }
+    
+    // Pad the fractional part with zeros if needed
+    const paddedFractionalPart = fractionalPart.padEnd(decimals, '0');
+    
+    // Combine the integer and fractional parts without the decimal point
+    const combinedAmount = `${integerPart}${paddedFractionalPart}`;
+    
+    // Remove leading zeros (if any) and convert to BigInt
+    return BigInt(combinedAmount.replace(/^0+/, '') || '0');
+  }
+  
+  // No decimal point, multiply by 10^decimals
+  return BigInt(amountStr) * BigInt(10) ** BigInt(decimals);
+}
+
+/**
  * Prepare a transfer transaction
  * @param params Common transfer parameters
  * @param tokenAddress The token contract address
+ * @param decimals The number of decimals for the token
  * @param network Network name
  * @returns Prepared account, transaction, and addresses
  */
 async function prepareTransfer(
   params: TransferBaseParams,
   tokenAddress: string,
+  decimals: number,
   network: string
 ) {
-  const amount = typeof params.amount === 'string' ? BigInt(params.amount) : params.amount;
+  // Convert amount to token units, accounting for decimals
+  const amount = parseTokenAmount(params.amount, decimals);
   const fromAddress = parseStarknetAddress(params.from);
   
   // Resolve the 'to' parameter which could be either an address or a Starknet ID
@@ -115,6 +162,7 @@ export async function transferETH(
     const { account, tx } = await prepareTransfer(
       params, 
       TOKEN_ADDRESSES.ETH,
+      TOKEN_DECIMALS.ETH,
       network
     );
     
@@ -139,6 +187,7 @@ export async function transferSTRK(
     const { account, tx } = await prepareTransfer(
       params, 
       TOKEN_ADDRESSES.STRK,
+      TOKEN_DECIMALS.STRK,
       network
     );
     
@@ -156,15 +205,25 @@ export async function transferSTRK(
  * @returns Transaction details
  */
 export async function transferERC20(
-  params: TransferBaseParams & { tokenAddress: string },
+  params: TransferBaseParams & { tokenAddress: string; decimals?: number },
   network = 'mainnet'
 ): Promise<TransferResult> {
   try {
     const tokenAddress = parseStarknetAddress(params.tokenAddress);
     
+    // If decimals not provided, fetch them from the token contract
+    let decimals = params.decimals;
+    if (decimals === undefined) {
+      const provider = getProvider(network);
+      const contract = getContract(tokenAddress, provider, network);
+      const decimalsResponse = await contract.call('decimals', []);
+      decimals = Number(decimalsResponse.toString());
+    }
+    
     const { account, tx } = await prepareTransfer(
       params, 
       tokenAddress,
+      decimals,
       network
     );
     
@@ -193,7 +252,6 @@ export async function executeContract(
   network = 'mainnet'
 ): Promise<TransferResult> {
   try {
-    const provider = getProvider(network);
     const accountAddress = parseStarknetAddress(params.accountAddress);
     
     // Resolve the contract address which could be either an address or a Starknet ID
