@@ -725,10 +725,10 @@ export function registerTools(server: McpServer) {
     "transfer_starknet_eth",
     "Transfer ETH from one account to another",
     {
-      privateKey: z.string().describe("Private key of the sender account"),
+      privateKey: z.string().describe("Private key of the sender account (not stored, only used to sign the transaction)"),
       from: z.string().describe("Sender's Starknet address"),
       to: z.string().describe("Recipient's Starknet address or Starknet ID"),
-      amount: z.string().describe("Amount to transfer in wei"),
+      amount: z.string().describe("Amount to transfer in ETH (human readable format, not wei)"),
       maxFee: z.string().optional().describe("Maximum fee to pay (optional)"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
@@ -738,7 +738,7 @@ export function registerTools(server: McpServer) {
           privateKey,
           from,
           to,
-          amount,
+          amount, // Will be converted from human-readable ETH to wei internally
           maxFee
         }, network);
         
@@ -768,10 +768,10 @@ export function registerTools(server: McpServer) {
     "transfer_starknet_strk",
     "Transfer STRK from one account to another",
     {
-      privateKey: z.string().describe("Private key of the sender account"),
+      privateKey: z.string().describe("Private key of the sender account (not stored, only used to sign the transaction)"),
       from: z.string().describe("Sender's Starknet address"),
       to: z.string().describe("Recipient's Starknet address or Starknet ID"),
-      amount: z.string().describe("Amount to transfer in wei"),
+      amount: z.string().describe("Amount to transfer in STRK (human readable format, not wei)"),
       maxFee: z.string().optional().describe("Maximum fee to pay (optional)"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
@@ -781,7 +781,7 @@ export function registerTools(server: McpServer) {
           privateKey,
           from,
           to,
-          amount,
+          amount, // Will be converted from human-readable STRK to wei internally
           maxFee
         }, network);
         
@@ -811,11 +811,11 @@ export function registerTools(server: McpServer) {
     "transfer_starknet_token",
     "Transfer ERC20 tokens from one account to another",
     {
-      privateKey: z.string().describe("Private key of the sender account"),
+      privateKey: z.string().describe("Private key of the sender account (not stored, only used to sign the transaction)"),
       from: z.string().describe("Sender's Starknet address"),
       to: z.string().describe("Recipient's Starknet address or Starknet ID"),
       tokenAddress: z.string().describe("Token contract address or Starknet ID"),
-      amount: z.string().describe("Amount to transfer (in token's smallest unit)"),
+      amount: z.string().describe("Amount to transfer in token's standard units (human readable format, not in smallest unit)"),
       maxFee: z.string().optional().describe("Maximum fee to pay (optional)"),
       network: z.string().optional().describe("Network name (e.g., 'mainnet', 'sepolia'). Defaults to Mainnet.")
     },
@@ -826,7 +826,7 @@ export function registerTools(server: McpServer) {
           from,
           to,
           tokenAddress,
-          amount,
+          amount, // Will be converted from human-readable token units to smallest units internally
           maxFee
         }, network);
         
@@ -856,7 +856,7 @@ export function registerTools(server: McpServer) {
     "execute_starknet_contract",
     "Execute a contract call (write operation)",
     {
-      privateKey: z.string().describe("Private key of the sender account"),
+      privateKey: z.string().describe("Private key of the sender account (not stored, only used to sign the transaction)"),
       accountAddress: z.string().describe("Sender's Starknet address"),
       contractAddress: z.string().describe("Contract address or Starknet ID"),
       entrypoint: z.string().describe("Function name to call"),

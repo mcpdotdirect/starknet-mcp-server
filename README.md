@@ -422,9 +422,9 @@ This server implements the following MCP tools:
 - `get_starknet_nft_balance`: Get the number of NFTs owned by an address
 
 #### Transfer Tools
-- `transfer_starknet_eth`: Transfer ETH from one account to another
-- `transfer_starknet_strk`: Transfer STRK from one account to another
-- `transfer_starknet_token`: Transfer ERC20 tokens from one account to another
+- `transfer_starknet_eth`: Transfer ETH from one account to another (amounts in human-readable format)
+- `transfer_starknet_strk`: Transfer STRK from one account to another (amounts in human-readable format)
+- `transfer_starknet_token`: Transfer ERC20 tokens from one account to another (amounts in human-readable format)
 
 ### Available MCP Resources
 
@@ -475,6 +475,7 @@ When using this server with AI assistants like Claude or GPT:
 ## 🔒 Security Considerations
 
 - **Private keys** are used only for transaction signing and are never stored by the server
+- **All token amounts** are specified in human-readable format (e.g., ETH, STRK, token units) rather than in wei or smallest units
 - Always validate and sanitize input parameters before executing operations
 - Consider implementing additional authentication mechanisms for production use
 - Use HTTPS for the HTTP server in production environments
