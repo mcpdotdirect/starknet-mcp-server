@@ -1,4 +1,13 @@
-# 1.0.0 (2025-03-23)
+## [1.0.1](https://github.com/mcpdotdirect/starknet-mcp-server/compare/v1.0.0...v1.0.1) (2025-03-23)
+
+
+### Bug Fixes
+
+* fixed binary to be executable with npx ([19921b3](https://github.com/mcpdotdirect/starknet-mcp-server/commit/19921b34bb37b75f5618227e1b77a1655aa86c5e))
+
+
+
+# [1.0.0](https://github.com/mcpdotdirect/starknet-mcp-server/compare/48c4b8d702302850d8b70a29cadd261afdbbda0e...v1.0.0) (2025-03-23)
 
 
 ### Bug Fixes
