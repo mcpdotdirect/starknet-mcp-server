@@ -2,7 +2,7 @@
   "name": "@mcpdotdirect/starknet-mcp-server",
   "module": "src/index.ts",
   "type": "module",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Model Context Protocol (MCP) server for interacting with Starknet",
   "private": false,
   "main": "build/index.js",
