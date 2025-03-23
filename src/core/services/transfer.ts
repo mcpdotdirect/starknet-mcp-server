@@ -215,7 +215,7 @@ export async function transferERC20(
     let decimals = params.decimals;
     if (decimals === undefined) {
       const provider = getProvider(network);
-      const contract = getContract(tokenAddress, provider, network);
+      const contract = await getContract(tokenAddress, provider, network);
       const decimalsResponse = await contract.call('decimals', []);
       decimals = Number(decimalsResponse.toString());
     }

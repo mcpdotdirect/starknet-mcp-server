@@ -44,7 +44,7 @@ async function getTokenBalance(
   const formattedOwnerAddress = parseStarknetAddress(ownerAddress);
   
   // Create contract instance
-  const contract = getContract(formattedTokenAddress, provider, network);
+  const contract = await getContract(formattedTokenAddress, provider, network);
   
   try {
     // Get balance and decimals in parallel
@@ -160,7 +160,7 @@ export async function getERC20Balance(
   try {
     // Get token symbol
     const provider = getProvider(network);
-    const contract = getContract(parseStarknetAddress(tokenAddress), provider, network);
+    const contract = await getContract(parseStarknetAddress(tokenAddress), provider, network);
     const symbolResponse = await contract.call('symbol', []);
     
     // Parse symbol
@@ -212,7 +212,7 @@ export async function isNFTOwner(
     const formattedOwnerAddress = parseStarknetAddress(ownerAddress);
     
     // Create NFT contract
-    const contract = getContract(formattedTokenAddress, provider, network);
+    const contract = await getContract(formattedTokenAddress, provider, network);
     
     // Convert tokenId to bigint if it's a string
     const tokenIdBigInt = typeof tokenId === 'string' ? BigInt(tokenId) : tokenId;
@@ -253,7 +253,7 @@ export async function getERC721Balance(
     const formattedOwnerAddress = parseStarknetAddress(ownerAddress);
     
     // Create NFT contract
-    const contract = getContract(formattedTokenAddress, provider, network);
+    const contract = await getContract(formattedTokenAddress, provider, network);
     
     // Call balanceOf directly
     const response = await contract.call('balanceOf', [formattedOwnerAddress]);

@@ -75,16 +75,20 @@ export function getAccount(
  * @param network Network name
  * @returns Contract instance
  */
-export function getContract(
+export async function getContract(
   contractAddress: string,
   provider?: ProviderInterface,
   network = 'mainnet'
-): Contract {
+): Promise<Contract> {
   const contractProvider = provider || getProvider(network);
   const formattedAddress = parseStarknetAddress(contractAddress);
   
+  // Fetch the contract class using getClassAt to get the ABI
+  const contractClass = await contractProvider.getClassAt(formattedAddress);
+  const abi = contractClass.abi || [];
+  
   return new Contract(
-    [], // No ABI needed initially - can be set later using contract.attachABI()
+    abi,
     formattedAddress,
     contractProvider
   );

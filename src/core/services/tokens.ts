@@ -35,7 +35,7 @@ export async function getTokenInfo(
 }> {
   const provider = getProvider(network);
   const formattedAddress = parseStarknetAddress(tokenAddress);
-  const contract = getContract(formattedAddress, provider, network);
+  const contract = await getContract(formattedAddress, provider, network);
   
   // Call contract to get token information using parallel requests
   const [nameResponse, symbolResponse, decimalsResponse] = await Promise.all([
@@ -111,7 +111,7 @@ export async function getTokenTotalSupply(
 }> {
   const formattedAddress = parseStarknetAddress(tokenAddress);
   const provider = getProvider(network);
-  const contract = getContract(formattedAddress, provider, network);
+  const contract = await getContract(formattedAddress, provider, network);
   
   // Get token decimals and supply in parallel
   const [decimalsResponse, supplyResponse] = await Promise.all([
