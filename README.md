@@ -7,6 +7,10 @@
 
 A comprehensive Model Context Protocol (MCP) server for the Starknet blockchain. This server provides AI agents with the ability to interact with Starknet networks, query blockchain data, manage wallets, and interact with smart contracts.
 
+<a href="https://glama.ai/mcp/servers/@mcpdotdirect/starknet-mcp-server">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@mcpdotdirect/starknet-mcp-server/badge" alt="Starknet Server MCP server" />
+</a>
+
 ## 📋 Contents
 
 - [Overview](#-overview)
