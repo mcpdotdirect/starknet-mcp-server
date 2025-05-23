@@ -1,5 +1,6 @@
 # Starknet MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@mcpdotdirect/starknet-mcp-server)](https://smithery.ai/server/@mcpdotdirect/starknet-mcp-server)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6)
 ![MCP](https://img.shields.io/badge/MCP-1.7+-green)
@@ -98,6 +99,14 @@ The server supports the following Starknet networks:
 - Node.js 18.0.0 or higher
 
 ## 📦 Installation
+
+### Installing via Smithery
+
+To install starknet-mcp-server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@mcpdotdirect/starknet-mcp-server):
+
+```bash
+npx -y @smithery/cli install @mcpdotdirect/starknet-mcp-server --client claude
+```
 
 ### Option 1: Use without installation (npx)
 
