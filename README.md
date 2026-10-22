@@ -1,6 +1,6 @@
 # Starknet MCP Server
 
-[![smithery badge](https://smithery.ai/badge/@mcpdotdirect/starknet-mcp-server)](https://smithery.ai/server/@mcpdotdirect/starknet-mcp-server)
+[![LightNow capabilities](https://lightnow.ai/badge/io.github.mcpdotdirect/starknet-mcp-server)](https://lightnow.ai/servers/io.github.mcpdotdirect/starknet-mcp-server)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6)
 ![MCP](https://img.shields.io/badge/MCP-1.7+-green)
